@@ -1,0 +1,114 @@
+#!/usr/bin/python  
+
+import os  
+import subprocess  
+import time  
+import sys
+
+class wpa_templates:  
+  START = ''''' 
+ctrl_interface=/var/run/wpa_supplicant 
+ctrl_interface_group=0 
+update_config=1 
+ap_scan=1 
+'''  
+  OPEN =  ''' 
+network={ 
+  ssid="%s" 
+  %s 
+  key_mgmt=NONE 
+}'''  
+  WEP =  ''' 
+network={ 
+  ssid="%s" 
+  %s 
+  key_mgmt=NONE 
+  group=WEP104 WEP40 
+  wep_key0="%s" 
+} 
+'''  
+  WPAPSK =  ''' 
+network={ 
+  ssid="%s" 
+  %s 
+  key_mgmt=WPA-PSK 
+  pairwise=CCMP TKIP 
+  group=CCMP TKIP WEP104 WEP40 
+  eap=TTLS PEAP TLS 
+  psk="%s" 
+} 
+'''  
+  WPAEAP =  ''' 
+network={ 
+  ssid="%s" 
+  %s 
+  key_mgmt=WPA-EAP 
+  pairwise=CCMP TKIP 
+  group=CCMP TKIP WEP104 WEP40 
+  eap=TTLS PEAP TLS 
+  identity="%s" 
+  password="%s" 
+  phase1="peaplabel=0" 
+} 
+'''  
+  #worst case, break this out.  
+  MAX = ''' 
+network={ 
+  ssid="%s" 
+  %s 
+  key_mgmt=WPA-EAP WPA-PSK IEEE8021X NONE 
+  pairwise=CCMP TKIP 
+  group=CCMP TKIP WEP104 WEP40 
+  psk="%s" 
+  eap=TTLS PEAP TLS 
+  identity="%s" 
+  password="%s" 
+  phase1="peaplabel=0" 
+} 
+'''  
+
+
+def setNetwork(network_conf, ssid):  
+    if not os.path.isfile('/etc/wpa_supplicant/wpa_supplicant.conf.original'):  
+        subprocess.call("cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf.original", shell=True)  
+  
+  
+    wpa_supplicant = open('/etc/wpa_supplicant/wpa_supplicant.conf','a') 
+#Will not take care of duplicates at the moment.  
+    wpa_supplicant.write(network_conf)  
+    wpa_supplicant.close();  
+  
+  
+    print "Initiating connection to " + ssid + ". Please wait..."  
+  
+  
+    try:  
+        if int(subprocess.check_output("systemctl status wpa_supplicant | grep 'active (running)' | wc -l", shell=True)) == 0:  
+          subprocess.call("systemctl stop hostapd &> /dev/null", shell=True)  
+          subprocess.call("systemctl start wpa_supplicant &> /dev/null", shell=True)  
+          time.sleep(10)  
+        else:  
+          subprocess.call("wpa_cli reconfigure &> /dev/null && sleep 2", shell=True)  
+  
+  
+        network_count = int(subprocess.check_output('wpa_cli list_networks | wc -l', shell=True))  
+        subprocess.call("wpa_cli select_network " + str(network_count - 2 - 1) + " &> /dev/null", shell=True)  
+        time.sleep(5)  
+  
+  
+        ifarray = subprocess.check_output("wpa_cli ifname", shell=True).split()  
+        subprocess.call("udhcpc -i " + ifarray[len(ifarray)-1] + " -n &> /dev/null", shell=True)  
+    except Exception as e:  
+        print e  
+        print "Sorry. Could not get an IP address."  
+    else:  
+        print "Attempting to enable network access, please check 'wpa_cli status' after a minute to confirm."  
+  
+
+def main():  
+    ssid = sys.argv[1]
+    setNetwork(wpa_templates.OPEN % (ssid, ""), ssid);
+
+if __name__ == "__main__":  
+      main()  
+
