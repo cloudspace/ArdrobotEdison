@@ -107,6 +107,10 @@ def setNetwork(network_conf, ssid):
 
 def main():  
     ssid = sys.argv[1]
+    for x in xrange(2, len(sys.argv)):
+      ssid = ssid + " " + sys.argv[x]
+    
+    print ssid
     setNetwork(wpa_templates.OPEN % (ssid, ""), ssid);
 
 if __name__ == "__main__":  
