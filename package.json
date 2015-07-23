@@ -9,12 +9,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cylon":      "~1.1.0",
+    "cylon-gpio": "~0.26.0",
+    "cylon-i2c":  "~0.22.0",
+    "cylon-intel-iot": "~0.7.0",
     "bleno": "^0.1.13",
-    "cylon": "^1.0.0",
-    "cylon-api-http": "^0.3.0",
-    "cylon-gpio": "^0.25.0",
-    "cylon-i2c": "^0.21.3",
-    "cylon-intel-iot": "^0.6.0",
     "wait.for": "^0.6.6"
   }
 }
