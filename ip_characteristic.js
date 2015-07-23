@@ -31,6 +31,8 @@ IpCharacteristic.prototype.onWriteRequest = function(data, offset, withoutRespon
 
   exec('/home/root/hellonode/set_network ' + data.toString(), 
   function (err, stdout, stderr) {
+      console.log(stdout);
+      console.log(stderr);
   });
 };
 

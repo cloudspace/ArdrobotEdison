@@ -2,6 +2,7 @@
 
 import os  
 import subprocess  
+from subprocess import CalledProcessError
 import time  
 import sys
 
@@ -104,14 +105,28 @@ def setNetwork(network_conf, ssid):
     else:  
         print "Attempting to enable network access, please check 'wpa_cli status' after a minute to confirm."  
   
-
 def main():  
     ssid = sys.argv[1]
     for x in xrange(2, len(sys.argv)):
       ssid = ssid + " " + sys.argv[x]
     
-    print ssid
-    setNetwork(wpa_templates.OPEN % (ssid, ""), ssid);
+    try:
+      current_ssid = subprocess.check_output(
+        'iwgetid -r',
+        shell=True
+      ).rstrip("\r\n")
+
+      if current_ssid == ssid:
+        print "Already connected to " + current_ssid
+      else:
+        connectNetwork(ssid) 
+
+    except CalledProcessError as e:
+	connectNetwork(ssid)
+
+def connectNetwork(ssid):
+      setNetwork(wpa_templates.OPEN % (ssid, ""), ssid);
+      print "Connected to " + ssid
 
 if __name__ == "__main__":  
       main()  
